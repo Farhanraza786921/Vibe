@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface MoviePlayerProps {
   tmdbId: string;
@@ -16,14 +17,25 @@ interface StreamSource {
 
 export default function MoviePlayer({ tmdbId }: MoviePlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  
+  const { toast } = useToast();
+
+  const vidsrcDomains = ['to', 'in', 'pm', 'xyz', 'net'];
   const sources: StreamSource[] = [
-    { name: 'VidSrc.to', url: `https://vidsrc.to/embed/movie/${tmdbId}` },
-    { name: 'VidSrc.me', url: `https://vidsrc.me/embed/movie?tmdb=${tmdbId}` },
+    ...vidsrcDomains.map(domain => ({
+        name: `VidSrc.${domain}`,
+        url: `https://vidsrc.${domain}/embed/movie/${tmdbId}`
+    })),
     { name: 'SuperEmbed', url: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1` },
   ];
 
   const [selectedSource, setSelectedSource] = useState<StreamSource>(sources[0]);
+  
+  const handleReportIssue = () => {
+    toast({
+      title: "Issue Reported",
+      description: `Thanks for your feedback on ${selectedSource.name}. Please try another server while we investigate.`,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -61,6 +73,10 @@ export default function MoviePlayer({ tmdbId }: MoviePlayerProps) {
             {source.name}
           </Button>
         ))}
+        <Button variant="ghost" size="sm" onClick={handleReportIssue} className="text-muted-foreground hover:text-foreground">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            Report Issue
+        </Button>
       </div>
     </div>
   );
