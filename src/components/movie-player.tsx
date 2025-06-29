@@ -19,13 +19,12 @@ export default function MoviePlayer({ tmdbId }: MoviePlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const vidsrcDomains = ['in', 'pm', 'xyz', 'net'];
   const sources: StreamSource[] = [
-    ...vidsrcDomains.map(domain => ({
-        name: `VidSrc.${domain}`,
-        url: `https://vidsrc.${domain}/embed/movie/${tmdbId}`
-    })),
-    { name: 'SuperEmbed', url: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1` },
+    { name: 'VidSrc (HI)', url: `https://vidsrc.xyz/embed/movie/${tmdbId}?lang=hi` },
+    { name: 'SuperEmbed (HI)', url: `https://multiembed.mov/?video_id=${tmdbId}&language=hi&tmdb=1` },
+    { name: 'VidPlay (UR)', url: `https://vidplay.site/embed/movie/${tmdbId}?lang=ur` },
+    { name: 'SuperEmbed (UR)', url: `https://multiembed.mov/?video_id=${tmdbId}&language=ur&tmdb=1` },
+    { name: '2Embed', url: `https://www.2embed.to/embed/movie/${tmdbId}` },
   ];
 
   const [selectedSource, setSelectedSource] = useState<StreamSource>(sources[0]);
