@@ -7,7 +7,6 @@ import { Loader2 } from 'lucide-react';
 
 interface MoviePlayerProps {
   tmdbId: string;
-  imdbId: string | null;
 }
 
 interface StreamSource {
@@ -15,24 +14,16 @@ interface StreamSource {
   url: string;
 }
 
-export default function MoviePlayer({ tmdbId, imdbId }: MoviePlayerProps) {
+export default function MoviePlayer({ tmdbId }: MoviePlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   
   const sources: StreamSource[] = [
     { name: 'VidSrc.to', url: `https://vidsrc.to/embed/movie/${tmdbId}` },
-    imdbId ? { name: 'VidSrc.me', url: `https://vidsrc.me/embed/movie?imdb=${imdbId}` } : null,
+    { name: 'VidSrc.me', url: `https://vidsrc.me/embed/movie?tmdb=${tmdbId}` },
     { name: 'SuperEmbed', url: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1` },
-  ].filter((source): source is StreamSource => source !== null);
+  ];
 
-  const [selectedSource, setSelectedSource] = useState<StreamSource | null>(sources.length > 0 ? sources[0] : null);
-
-  if (!selectedSource) {
-    return (
-      <div className="w-full aspect-video bg-card flex items-center justify-center rounded-lg">
-        <p className="text-muted-foreground">Streaming source not available for this movie.</p>
-      </div>
-    );
-  }
+  const [selectedSource, setSelectedSource] = useState<StreamSource>(sources[0]);
 
   return (
     <div className="space-y-4">

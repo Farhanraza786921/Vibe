@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getMovieDetails, getMovieImageUrl, getMovieImdbId } from '@/lib/tmdb';
+import { getMovieDetails, getMovieImageUrl } from '@/lib/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, DollarSign, BarChart } from 'lucide-react';
 import type { Movie } from '@/types';
@@ -38,15 +38,9 @@ const DetailItem = ({ label, value, icon }: { label: string; value: string | num
 
 export default async function MoviePage({ params }: MoviePageProps) {
   let movie: Movie;
-  let imdbId: string | null;
 
   try {
-    const [movieData, imdbIdData] = await Promise.all([
-        getMovieDetails(params.id),
-        getMovieImdbId(params.id)
-    ]);
-    movie = movieData;
-    imdbId = imdbIdData;
+    movie = await getMovieDetails(params.id);
   } catch (error) {
     console.error(error);
     notFound();
@@ -141,7 +135,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
 
                 <div>
                     <h2 className="text-2xl font-bold font-headline border-l-4 border-primary pl-4 mb-4">Stream Now</h2>
-                    <MoviePlayer tmdbId={params.id} imdbId={imdbId} />
+                    <MoviePlayer tmdbId={params.id} />
                 </div>
             </div>
 
