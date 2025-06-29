@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Clock, DollarSign, BarChart } from 'lucide-react';
 import type { Movie } from '@/types';
 import MoviePlayer from '@/components/movie-player';
+import Backdrop from '@/components/backdrop';
 
 type MoviePageProps = {
   params: {
@@ -73,14 +74,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
   return (
     <div className="space-y-8">
       <div className="relative h-[30vh] md:h-[50vh] w-full">
-        <Image
-          src={backdropUrl}
-          alt={`Backdrop for ${movie.title}`}
-          fill
-          className="object-cover object-top opacity-20"
-          priority
-          data-ai-hint="movie background"
-        />
+        <Backdrop src={backdropUrl} alt={`Backdrop for ${movie.title}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
       </div>
 
