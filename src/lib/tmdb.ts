@@ -31,6 +31,16 @@ export const getMovieDetails = async (id: string): Promise<Movie> => {
   return res.json();
 };
 
+export const getMovieImdbId = async (tmdbId: string): Promise<string | null> => {
+  const res = await fetch(`${API_BASE_URL}/movie/${tmdbId}/external_ids?api_key=${API_KEY}`);
+  if (!res.ok) {
+    console.error(`Failed to fetch external IDs for TMDB ID: ${tmdbId}`);
+    return null;
+  }
+  const data = await res.json();
+  return data.imdb_id || null;
+};
+
 export const getMovieImageUrl = (path: string, quality: 'w500' | 'original' = 'w500') => {
   return `https://image.tmdb.org/t/p/${quality}${path}`;
 };

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getMovieDetails, getMovieImageUrl } from '@/lib/tmdb';
+import { getMovieDetails, getMovieImageUrl, getMovieImdbId } from '@/lib/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, DollarSign, BarChart } from 'lucide-react';
 import type { Movie } from '@/types';
@@ -37,8 +37,15 @@ const DetailItem = ({ label, value, icon }: { label: string; value: string | num
 
 export default async function MoviePage({ params }: MoviePageProps) {
   let movie: Movie;
+  let imdbId: string | null;
+
   try {
-    movie = await getMovieDetails(params.id);
+    const [movieData, imdbIdData] = await Promise.all([
+        getMovieDetails(params.id),
+        getMovieImdbId(params.id)
+    ]);
+    movie = movieData;
+    imdbId = imdbIdData;
   } catch (error) {
     console.error(error);
     notFound();
@@ -134,13 +141,19 @@ export default async function MoviePage({ params }: MoviePageProps) {
                 <div>
                     <h2 className="text-2xl font-bold font-headline border-l-4 border-primary pl-4 mb-4">Stream Now</h2>
                     <div className="aspect-video w-full rounded-lg overflow-hidden border border-border shadow-2xl">
-                    <iframe
-                        src={`https://vidsrc.to/embed/movie?tmdb=${movie.id}`}
-                        referrerPolicy="origin"
-                        allowFullScreen
-                        frameBorder="0"
-                        className="w-full h-full"
-                    ></iframe>
+                    {imdbId ? (
+                        <iframe
+                            src={`https://vidsrc.me/embed/movie?imdb=${imdbId}`}
+                            referrerPolicy="origin"
+                            allowFullScreen
+                            frameBorder="0"
+                            className="w-full h-full"
+                        ></iframe>
+                    ) : (
+                        <div className="w-full h-full bg-card flex items-center justify-center">
+                            <p className="text-muted-foreground">Streaming source not available.</p>
+                        </div>
+                    )}
                     </div>
                 </div>
             </div>
