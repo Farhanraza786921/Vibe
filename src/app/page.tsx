@@ -35,38 +35,36 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadMoreLoading, setIsLoadMoreLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchInitialMovies = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setMovies([]);
+      setCurrentPage(1);
+      const trendingMovies = await getTrendingMovies(1);
+      setMovies(trendingMovies);
+      setHasMore(trendingMovies.length > 0);
+    } catch (err) {
+      setError('Failed to fetch movies. Please try again later.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTrending = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const trendingMovies = await getTrendingMovies();
-        setMovies(trendingMovies);
-      } catch (err) {
-        setError('Failed to fetch movies. Please try again later.');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTrending();
+    fetchInitialMovies();
   }, []);
 
   const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!searchTerm.trim()) {
-      // If search is cleared, fetch trending again
       setSearchQuery('');
-      try {
-        setIsLoading(true);
-        setError(null);
-        const trendingMovies = await getTrendingMovies();
-        setMovies(trendingMovies);
-      } catch (err) {
-        setError('Failed to fetch movies. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
+      await fetchInitialMovies();
       return;
     }
     
@@ -74,12 +72,41 @@ export default function Home() {
     try {
       setIsLoading(true);
       setError(null);
-      const searchResults = await searchMovies(searchTerm);
+      setMovies([]);
+      setCurrentPage(1);
+      const searchResults = await searchMovies(searchTerm, 1);
       setMovies(searchResults);
+      setHasMore(searchResults.length > 0);
     } catch (err) {
       setError('Failed to search for movies. Please try again later.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadMoreLoading) return;
+
+    setIsLoadMoreLoading(true);
+    const nextPage = currentPage + 1;
+    try {
+      let newMovies: Movie[] = [];
+      if (searchQuery) {
+        newMovies = await searchMovies(searchQuery, nextPage);
+      } else {
+        newMovies = await getTrendingMovies(nextPage);
+      }
+      
+      if (newMovies.length > 0) {
+        setMovies(prevMovies => [...prevMovies, ...newMovies]);
+        setCurrentPage(nextPage);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+       setError('Failed to load more movies.');
+    } finally {
+      setIsLoadMoreLoading(false);
     }
   };
 
@@ -123,18 +150,31 @@ export default function Home() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : movies.length > 0 ? (
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {movies.map((movie) => (
-              <motion.div key={movie.id} variants={itemVariants}>
-                <MovieCard movie={movie} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {movies.map((movie) => (
+                <motion.div key={movie.id} variants={itemVariants}>
+                  <MovieCard movie={movie} />
+                </motion.div>
+              ))}
+            </motion.div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-12">
+                <Button onClick={handleLoadMore} disabled={isLoadMoreLoading} size="lg">
+                  {isLoadMoreLoading ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : null}
+                  {isLoadMoreLoading ? 'Loading...' : 'Load More'}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-16">
             <p className="text-2xl font-semibold text-muted-foreground">No movies found.</p>

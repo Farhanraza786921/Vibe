@@ -4,9 +4,11 @@ import { recommendMovies } from '@/ai/flows/movie-recommendations';
 const API_KEY = 'b9fb81cfd0cac69fcfbf6a51b71effca';
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
-const fetchMoviesFromTmdb = async (query: string): Promise<Movie[]> => {
+const fetchMoviesFromTmdb = async (query: string, page = 1): Promise<Movie[]> => {
   const res = await fetch(
-    `${API_BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`
+    `${API_BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(
+      query
+    )}&include_adult=false&page=${page}`
   );
   if (!res.ok) {
     console.error(`Failed to search TMDB for: ${query}`);
@@ -16,8 +18,8 @@ const fetchMoviesFromTmdb = async (query: string): Promise<Movie[]> => {
   return data.results;
 };
 
-export const getTrendingMovies = async (): Promise<Movie[]> => {
-  const res = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
+export const getTrendingMovies = async (page = 1): Promise<Movie[]> => {
+  const res = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${page}`);
   if (!res.ok) {
     throw new Error('Failed to fetch trending movies');
   }
@@ -25,9 +27,14 @@ export const getTrendingMovies = async (): Promise<Movie[]> => {
   return data.results;
 };
 
-export const searchMovies = async (query: string): Promise<Movie[]> => {
+export const searchMovies = async (query: string, page = 1): Promise<Movie[]> => {
   if (!query.trim()) {
     return [];
+  }
+
+  // Only trigger AI recommendations on the first page of search results.
+  if (page > 1) {
+    return fetchMoviesFromTmdb(query, page);
   }
 
   const tmdbResults = await fetchMoviesFromTmdb(query);
