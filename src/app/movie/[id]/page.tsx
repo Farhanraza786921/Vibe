@@ -4,6 +4,7 @@ import { getMovieDetails, getMovieImageUrl, getMovieImdbId } from '@/lib/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, DollarSign, BarChart } from 'lucide-react';
 import type { Movie } from '@/types';
+import MoviePlayer from '@/components/movie-player';
 
 type MoviePageProps = {
   params: {
@@ -140,21 +141,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
 
                 <div>
                     <h2 className="text-2xl font-bold font-headline border-l-4 border-primary pl-4 mb-4">Stream Now</h2>
-                    <div className="aspect-video w-full rounded-lg overflow-hidden border border-border shadow-2xl">
-                    {imdbId ? (
-                        <iframe
-                            src={`https://vidsrc.me/embed/movie?imdb=${imdbId}`}
-                            referrerPolicy="origin"
-                            allowFullScreen
-                            frameBorder="0"
-                            className="w-full h-full"
-                        ></iframe>
-                    ) : (
-                        <div className="w-full h-full bg-card flex items-center justify-center">
-                            <p className="text-muted-foreground">Streaming source not available.</p>
-                        </div>
-                    )}
-                    </div>
+                    <MoviePlayer tmdbId={params.id} imdbId={imdbId} />
                 </div>
             </div>
 
