@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -10,16 +8,17 @@ import { Star } from 'lucide-react';
 
 interface MovieCardProps {
   movie: Movie;
+  language: string;
 }
 
-const MovieCard = ({ movie }: MovieCardProps) => {
+const MovieCard = ({ movie, language }: MovieCardProps) => {
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A';
   const posterUrl = movie.poster_path
     ? getMovieImageUrl(movie.poster_path)
     : `https://placehold.co/500x750.png`;
 
   return (
-    <Link href={`/movie/${movie.id}`} className="block group h-full">
+    <Link href={`/movie/${movie.id}?lang=${language}`} className="block group h-full">
       <motion.div
         whileHover={{ scale: 1.05, y: -5 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}

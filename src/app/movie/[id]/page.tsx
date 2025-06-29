@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getMovieDetails, getMovieImageUrl } from '@/lib/tmdb';
 import { Badge } from '@/components/ui/badge';
-import { Star, Clock, DollarSign, BarChart } from 'lucide-react';
+import { Star, Clock, DollarSign, BarChart, Languages } from 'lucide-react';
 import type { Movie } from '@/types';
 import MoviePlayer from '@/components/movie-player';
 import Backdrop from '@/components/backdrop';
@@ -11,11 +11,15 @@ type MoviePageProps = {
   params: {
     id: string;
   };
+  searchParams?: {
+    [key: string]: string | string[] | undefined;
+  }
 };
 
-export async function generateMetadata({ params }: MoviePageProps) {
+export async function generateMetadata({ params, searchParams }: MoviePageProps) {
+  const lang = typeof searchParams?.lang === 'string' ? searchParams.lang : 'en-US';
   try {
-    const movie = await getMovieDetails(params.id);
+    const movie = await getMovieDetails(params.id, lang);
     return {
       title: `${movie.title} | VibeStream`,
       description: movie.overview,
@@ -33,15 +37,16 @@ const DetailItem = ({ label, value, icon }: { label: string; value: string | num
             {icon}
             <p className="font-semibold text-muted-foreground">{label}</p>
         </div>
-        <p className="text-foreground">{value}</p>
+        <p className="text-foreground text-right">{value}</p>
     </div>
 )
 
-export default async function MoviePage({ params }: MoviePageProps) {
+export default async function MoviePage({ params, searchParams }: MoviePageProps) {
   let movie: Movie;
+  const lang = typeof searchParams?.lang === 'string' ? searchParams.lang : 'en-US';
 
   try {
-    movie = await getMovieDetails(params.id);
+    movie = await getMovieDetails(params.id, lang);
   } catch (error) {
     console.error(error);
     notFound();
@@ -138,6 +143,13 @@ export default async function MoviePage({ params }: MoviePageProps) {
                  <div className="space-y-4">
                      {movie.status && <DetailItem label="Status" value={movie.status} />}
                      <DetailItem label="Release Date" value={movie.release_date} />
+                     {movie.spoken_languages && movie.spoken_languages.length > 0 && (
+                        <DetailItem 
+                            label="Languages" 
+                            value={movie.spoken_languages.map(l => l.english_name).join(', ')} 
+                            icon={<Languages className="w-4 h-4 text-muted-foreground" />}
+                        />
+                     )}
                      {movie.budget && movie.budget > 0 && <DetailItem label="Budget" value={formatCurrency(movie.budget)} icon={<DollarSign className="w-4 h-4 text-muted-foreground" />} />}
                      {movie.revenue && movie.revenue > 0 && <DetailItem label="Revenue" value={formatCurrency(movie.revenue)} icon={<BarChart className="w-4 h-4 text-muted-foreground" />} />}
                  </div>

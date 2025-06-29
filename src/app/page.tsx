@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Loader2, ServerCrash } from 'lucide-react';
 import type { Movie } from '@/types';
@@ -9,6 +9,7 @@ import MovieCard from '@/components/movie-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useLanguage } from '@/contexts/language-context';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,6 +30,7 @@ const itemVariants = {
 };
 
 export default function Home() {
+  const { language } = useLanguage();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,75 +40,59 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadMoreLoading, setIsLoadMoreLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  
+  const [isPending, startTransition] = useTransition();
 
-  const fetchInitialMovies = async () => {
+  const fetchMovies = async (page: number, query?: string) => {
     try {
-      setIsLoading(true);
+      if (page === 1) {
+        setIsLoading(true);
+        setMovies([]);
+      } else {
+        setIsLoadMoreLoading(true);
+      }
       setError(null);
-      setMovies([]);
-      setCurrentPage(1);
-      const trendingMovies = await getTrendingMovies(1);
-      setMovies(trendingMovies);
-      setHasMore(trendingMovies.length > 0);
+      
+      const newMovies = query 
+        ? await searchMovies(query, page, language) 
+        : await getTrendingMovies(page, language);
+
+      if (page === 1) {
+        setMovies(newMovies);
+      } else {
+        setMovies(prev => [...prev, ...newMovies]);
+      }
+      
+      setHasMore(newMovies.length > 0);
+      setCurrentPage(page);
+
     } catch (err) {
       setError('Failed to fetch movies. Please try again later.');
       console.error(err);
     } finally {
       setIsLoading(false);
+      setIsLoadMoreLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInitialMovies();
-  }, []);
-
-  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) {
-      setSearchQuery('');
-      await fetchInitialMovies();
-      return;
-    }
-    
-    setSearchQuery(searchTerm);
-    try {
-      setIsLoading(true);
-      setError(null);
-      setMovies([]);
-      setCurrentPage(1);
-      const searchResults = await searchMovies(searchTerm, 1);
-      setMovies(searchResults);
-      setHasMore(searchResults.length > 0);
-    } catch (err) {
-      setError('Failed to search for movies. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoadMore = async () => {
-    if (isLoadMoreLoading) return;
-
-    setIsLoadMoreLoading(true);
-    const nextPage = currentPage + 1;
-    try {
-      let newMovies: Movie[] = [];
+    startTransition(() => {
       if (searchQuery) {
-        newMovies = await searchMovies(searchQuery, nextPage);
+        fetchMovies(1, searchQuery);
       } else {
-        newMovies = await getTrendingMovies(nextPage);
+        fetchMovies(1);
       }
-      
-      if (newMovies.length > 0) {
-        setMovies(prevMovies => [...prevMovies, ...newMovies]);
-        setCurrentPage(nextPage);
-      } else {
-        setHasMore(false);
-      }
-    } catch (err) {
-       setError('Failed to load more movies.');
-    } finally {
-      setIsLoadMoreLoading(false);
+    });
+  }, [language, searchQuery]);
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSearchQuery(searchTerm);
+  };
+  
+  const handleLoadMore = () => {
+    if (!isLoadMoreLoading) {
+      fetchMovies(currentPage + 1, searchQuery);
     }
   };
 
@@ -119,7 +105,7 @@ export default function Home() {
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
           Discover and stream your favorite movies. Instantly, no strings attached.
         </p>
-        <form onSubmit={handleSearch} className="max-w-xl mx-auto flex gap-2 pt-4">
+        <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto flex gap-2 pt-4">
           <Input
             type="search"
             placeholder="Search for a movie..."
@@ -127,7 +113,7 @@ export default function Home() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button type="submit" size="lg" disabled={isLoading}>
+          <Button type="submit" size="lg" disabled={isLoading || isPending}>
             <Search className="mr-2 h-5 w-5" />
             Search
           </Button>
@@ -139,7 +125,7 @@ export default function Home() {
           {searchQuery ? `Search Results for "${searchQuery}"` : 'Trending This Week'}
         </h2>
         
-        {isLoading ? (
+        {isLoading || isPending ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
           </div>
@@ -159,7 +145,7 @@ export default function Home() {
             >
               {movies.map((movie) => (
                 <motion.div key={movie.id} variants={itemVariants}>
-                  <MovieCard movie={movie} />
+                  <MovieCard movie={movie} language={language} />
                 </motion.div>
               ))}
             </motion.div>

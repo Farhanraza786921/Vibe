@@ -3,6 +3,12 @@ export interface Genre {
   name: string;
 }
 
+export interface SpokenLanguage {
+  iso_639_1: string;
+  name: string;
+  english_name: string;
+}
+
 export interface Movie {
   id: number;
   title: string;
@@ -16,4 +22,5 @@ export interface Movie {
   budget?: number;
   revenue?: number;
   runtime?: number;
+  spoken_languages?: SpokenLanguage[];
 }

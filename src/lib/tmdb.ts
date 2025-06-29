@@ -4,11 +4,11 @@ import { recommendMovies } from '@/ai/flows/movie-recommendations';
 const API_KEY = 'b9fb81cfd0cac69fcfbf6a51b71effca';
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
-const fetchMoviesFromTmdb = async (query: string, page = 1): Promise<Movie[]> => {
+const fetchMoviesFromTmdb = async (query: string, page = 1, language = 'en-US'): Promise<Movie[]> => {
   const res = await fetch(
     `${API_BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(
       query
-    )}&include_adult=false&page=${page}`
+    )}&include_adult=false&page=${page}&language=${language}`
   );
   if (!res.ok) {
     console.error(`Failed to search TMDB for: ${query}`);
@@ -18,8 +18,8 @@ const fetchMoviesFromTmdb = async (query: string, page = 1): Promise<Movie[]> =>
   return data.results;
 };
 
-export const getTrendingMovies = async (page = 1): Promise<Movie[]> => {
-  const res = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${page}`);
+export const getTrendingMovies = async (page = 1, language = 'en-US'): Promise<Movie[]> => {
+  const res = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${page}&language=${language}`);
   if (!res.ok) {
     throw new Error('Failed to fetch trending movies');
   }
@@ -27,17 +27,17 @@ export const getTrendingMovies = async (page = 1): Promise<Movie[]> => {
   return data.results;
 };
 
-export const searchMovies = async (query: string, page = 1): Promise<Movie[]> => {
+export const searchMovies = async (query: string, page = 1, language = 'en-US'): Promise<Movie[]> => {
   if (!query.trim()) {
     return [];
   }
 
   // Only trigger AI recommendations on the first page of search results.
   if (page > 1) {
-    return fetchMoviesFromTmdb(query, page);
+    return fetchMoviesFromTmdb(query, page, language);
   }
 
-  const tmdbResults = await fetchMoviesFromTmdb(query);
+  const tmdbResults = await fetchMoviesFromTmdb(query, 1, language);
 
   if (tmdbResults.length < 3) {
     try {
@@ -45,7 +45,7 @@ export const searchMovies = async (query: string, page = 1): Promise<Movie[]> =>
       const aiResponse = await recommendMovies({ query, existingTitles });
       
       if (aiResponse && aiResponse.recommendations.length > 0) {
-        const recommendationPromises = aiResponse.recommendations.map(title => fetchMoviesFromTmdb(title));
+        const recommendationPromises = aiResponse.recommendations.map(title => fetchMoviesFromTmdb(title, 1, language));
         const recommendedSearches = await Promise.all(recommendationPromises);
         
         const recommendedMovies = recommendedSearches
@@ -68,8 +68,8 @@ export const searchMovies = async (query: string, page = 1): Promise<Movie[]> =>
   return tmdbResults;
 };
 
-export const getMovieDetails = async (id: string): Promise<Movie> => {
-  const res = await fetch(`${API_BASE_URL}/movie/${id}?api_key=${API_KEY}`);
+export const getMovieDetails = async (id: string, language = 'en-US'): Promise<Movie> => {
+  const res = await fetch(`${API_BASE_URL}/movie/${id}?api_key=${API_KEY}&language=${language}`);
   if (!res.ok) {
     throw new Error('Failed to fetch movie details');
   }
