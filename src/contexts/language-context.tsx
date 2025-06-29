@@ -16,6 +16,7 @@ const availableLanguages = [
   { code: 'hi-IN', name: 'हिंदी' },
   { code: 'ta-IN', name: 'தமிழ்' },
   { code: 'te-IN', name: 'తెలుగు' },
+  { code: 'ur-PK', name: 'اردو' },
 ];
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
