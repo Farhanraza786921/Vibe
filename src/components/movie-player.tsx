@@ -19,7 +19,7 @@ export default function MoviePlayer({ tmdbId }: MoviePlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const vidsrcDomains = ['to', 'in', 'pm', 'xyz', 'net'];
+  const vidsrcDomains = ['in', 'pm', 'xyz', 'net'];
   const sources: StreamSource[] = [
     ...vidsrcDomains.map(domain => ({
         name: `VidSrc.${domain}`,
